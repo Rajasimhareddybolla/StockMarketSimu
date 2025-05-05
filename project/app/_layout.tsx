@@ -5,6 +5,8 @@ import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { UserProvider } from '@/context/UserContext';
+import { AuthProvider } from '@/context/AuthContext';
+import AuthGuard from '@/components/AuthGuard';
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -30,20 +32,43 @@ export default function RootLayout() {
   }
 
   return (
-    <UserProvider>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" options={{ title: 'Oops!' }} />
-        <Stack.Screen 
-          name="stock/[symbol]" 
-          options={{ 
-            headerShown: true,
-            headerBackTitleVisible: false,
-            presentation: 'card',
-          }} 
-        />
-      </Stack>
-      <StatusBar style="auto" />
-    </UserProvider>
+    <AuthProvider>
+      <UserProvider>
+        <AuthGuard>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" options={{ title: 'Oops!' }} />
+            <Stack.Screen 
+              name="stock/[symbol]" 
+              options={{ 
+                headerShown: true,
+                headerBackTitleVisible: false,
+                presentation: 'card',
+              }} 
+            />
+            <Stack.Screen 
+              name="profile" 
+              options={{ 
+                headerShown: true,
+                title: 'Profile',
+                headerBackTitleVisible: false,
+                presentation: 'card',
+              }} 
+            />
+            <Stack.Screen 
+              name="settings" 
+              options={{ 
+                headerShown: true,
+                title: 'Settings',
+                headerBackTitleVisible: false,
+                presentation: 'card',
+              }} 
+            />
+          </Stack>
+          <StatusBar style="auto" />
+        </AuthGuard>
+      </UserProvider>
+    </AuthProvider>
   );
 }

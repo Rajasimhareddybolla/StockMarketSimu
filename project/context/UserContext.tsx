@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { generateInitialStocks } from '@/utils/stockUtils';
 import { Stock, Transaction, Portfolio } from '@/types/stocks';
+import { useAuth } from './AuthContext';
 
 interface UserContextType {
   balance: number;
@@ -9,13 +10,14 @@ interface UserContextType {
   stocks: Stock[];
   refreshStocks: () => void;
   portfolio: Portfolio[];
-  addToPortfolio: (stock: Stock, quantity: number, price: number) => void;
-  sellFromPortfolio: (symbol: string, quantity: number, price: number) => void;
+  addToPortfolio: (stock: Stock, quantity: number, price: number) => boolean;
+  sellFromPortfolio: (symbol: string, quantity: number, price: number) => boolean;
   transactions: Transaction[];
   watchlist: string[];
   addToWatchlist: (symbol: string) => void;
   removeFromWatchlist: (symbol: string) => void;
   isInWatchlist: (symbol: string) => boolean;
+  resetUserData: () => void;
 }
 
 const UserContext = createContext<UserContextType>({
@@ -24,61 +26,100 @@ const UserContext = createContext<UserContextType>({
   stocks: [],
   refreshStocks: () => {},
   portfolio: [],
-  addToPortfolio: () => {},
-  sellFromPortfolio: () => {},
+  addToPortfolio: () => false,
+  sellFromPortfolio: () => false,
   transactions: [],
   watchlist: [],
   addToWatchlist: () => {},
   removeFromWatchlist: () => {},
   isInWatchlist: () => false,
+  resetUserData: () => {},
 });
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, isLoggedIn } = useAuth();
   const [balance, setBalance] = useState<number>(10000);
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [portfolio, setPortfolio] = useState<Portfolio[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [watchlist, setWatchlist] = useState<string[]>([]);
   
-  // Initialize stocks
+  // Initialize stocks on mount
   useEffect(() => {
-    loadData();
+    refreshStocks();
   }, []);
   
-  const loadData = async () => {
+  // Load user-specific data when user changes
+  useEffect(() => {
+    if (isLoggedIn && user) {
+      loadUserData(user.id);
+    } else {
+      // Reset to default for non-authenticated users
+      resetUserData();
+    }
+  }, [isLoggedIn, user?.id]);
+  
+  const loadUserData = async (userId: string) => {
     try {
-      // Load saved data or initialize with defaults
-      const balanceData = await AsyncStorage.getItem('balance');
-      const portfolioData = await AsyncStorage.getItem('portfolio');
-      const transactionsData = await AsyncStorage.getItem('transactions');
-      const watchlistData = await AsyncStorage.getItem('watchlist');
+      // Load saved user data with user-specific keys
+      const balanceData = await AsyncStorage.getItem(`user_${userId}_balance`);
+      const portfolioData = await AsyncStorage.getItem(`user_${userId}_portfolio`);
+      const transactionsData = await AsyncStorage.getItem(`user_${userId}_transactions`);
+      const watchlistData = await AsyncStorage.getItem(`user_${userId}_watchlist`);
       
       if (balanceData) setBalance(JSON.parse(balanceData));
-      if (portfolioData) setPortfolio(JSON.parse(portfolioData));
-      if (transactionsData) setTransactions(JSON.parse(transactionsData));
-      if (watchlistData) setWatchlist(JSON.parse(watchlistData));
+      else setBalance(10000); // Default starting balance
       
-      refreshStocks();
+      if (portfolioData) setPortfolio(JSON.parse(portfolioData));
+      else setPortfolio([]);
+      
+      if (transactionsData) {
+        // Convert transaction string dates back to Date objects
+        const parsedTransactions: Transaction[] = JSON.parse(transactionsData);
+        const transactionsWithDates = parsedTransactions.map(transaction => ({
+          ...transaction,
+          date: new Date(transaction.date)
+        }));
+        setTransactions(transactionsWithDates);
+      } else {
+        setTransactions([]);
+      }
+      
+      if (watchlistData) setWatchlist(JSON.parse(watchlistData));
+      else setWatchlist([]);
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Error loading user data:', error);
+      resetUserData();
     }
   };
   
-  const saveData = async () => {
+  const saveUserData = async () => {
+    if (!isLoggedIn || !user) return;
+    
     try {
-      await AsyncStorage.setItem('balance', JSON.stringify(balance));
-      await AsyncStorage.setItem('portfolio', JSON.stringify(portfolio));
-      await AsyncStorage.setItem('transactions', JSON.stringify(transactions));
-      await AsyncStorage.setItem('watchlist', JSON.stringify(watchlist));
+      await AsyncStorage.setItem(`user_${user.id}_balance`, JSON.stringify(balance));
+      await AsyncStorage.setItem(`user_${user.id}_portfolio`, JSON.stringify(portfolio));
+      await AsyncStorage.setItem(`user_${user.id}_transactions`, JSON.stringify(transactions));
+      await AsyncStorage.setItem(`user_${user.id}_watchlist`, JSON.stringify(watchlist));
     } catch (error) {
-      console.error('Error saving data:', error);
+      console.error('Error saving user data:', error);
     }
   };
   
-  // Save data whenever it changes
+  // Reset user data to defaults (for logout or demo mode)
+  const resetUserData = () => {
+    setBalance(10000);
+    setPortfolio([]);
+    setTransactions([]);
+    setWatchlist([]);
+  };
+  
+  // Save data whenever it changes and user is logged in
   useEffect(() => {
-    saveData();
-  }, [balance, portfolio, transactions, watchlist]);
+    if (isLoggedIn && user) {
+      saveUserData();
+    }
+  }, [balance, portfolio, transactions, watchlist, isLoggedIn, user]);
   
   const refreshStocks = () => {
     const updatedStocks = generateInitialStocks(stocks);
@@ -230,7 +271,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         watchlist,
         addToWatchlist,
         removeFromWatchlist,
-        isInWatchlist
+        isInWatchlist,
+        resetUserData
       }}
     >
       {children}

@@ -1,5 +1,9 @@
 import { Redirect } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Root() {
-  return <Redirect href="/(tabs)" />;
+  const { isLoggedIn } = useAuth();
+  
+  // Redirect based on authentication state
+  return isLoggedIn ? <Redirect href="/(tabs)" /> : <Redirect href="/(auth)/login" />;
 }
