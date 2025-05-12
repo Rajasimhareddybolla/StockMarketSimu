@@ -51,7 +51,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   // Load user-specific data when user changes
   useEffect(() => {
-    if (isLoggedIn && user) {
+    // Only attempt to load data if we have a valid logged-in user
+    if (isLoggedIn && user && user.id) {
       loadUserData(user.id);
     } else {
       // Reset to default for non-authenticated users
@@ -60,6 +61,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [isLoggedIn, user?.id]);
   
   const loadUserData = async (userId: string) => {
+    if (!userId) return; // Safety check
+    
     try {
       // Load saved user data with user-specific keys
       const balanceData = await AsyncStorage.getItem(`user_${userId}_balance`);
@@ -94,7 +97,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   
   const saveUserData = async () => {
-    if (!isLoggedIn || !user) return;
+    if (!isLoggedIn || !user || !user.id) return;
     
     try {
       await AsyncStorage.setItem(`user_${user.id}_balance`, JSON.stringify(balance));
@@ -116,9 +119,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   // Save data whenever it changes and user is logged in
   useEffect(() => {
-    if (isLoggedIn && user) {
-      saveUserData();
-    }
+    // Use a small timeout to prevent excessive saving during initial load
+    const timeoutId = setTimeout(() => {
+      if (isLoggedIn && user && user.id) {
+        saveUserData();
+      }
+    }, 100);
+    
+    return () => clearTimeout(timeoutId);
   }, [balance, portfolio, transactions, watchlist, isLoggedIn, user]);
   
   const refreshStocks = () => {
@@ -250,7 +258,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   
   const removeFromWatchlist = (symbol: string) => {
-    setWatchlist(prev => prev.filter(s => s !== symbol));
+    setWatchlist(prev => prev.filter(item => item !== symbol));
   };
   
   const isInWatchlist = (symbol: string) => {
