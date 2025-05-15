@@ -1,13 +1,38 @@
-import { useEffect } from 'react';
-import { Stack } from 'expo-router';
+import React, { useEffect } from 'react';
+import { Stack, useSegments, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { UserProvider } from '@/context/UserContext';
+import { AuthProvider } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
+
+// Auth middleware to protect routes
+function AuthMiddleware({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const inAuthGroup = segments[0] === '(tabs)' || segments[0] === 'stock';
+    
+    if (!isAuthenticated && inAuthGroup) {
+      // Redirect to login if trying to access protected routes while not authenticated
+      router.replace('/login');
+    } else if (isAuthenticated && (segments[0] === 'login' || segments[0] === 'register')) {
+      // Redirect to home if already authenticated and trying to access auth routes
+      router.replace('/(tabs)');
+    }
+  }, [isAuthenticated, segments, isLoading]);
+
+  return <>{children}</>;
+}
 
 export default function RootLayout() {
   useFrameworkReady();
@@ -30,20 +55,26 @@ export default function RootLayout() {
   }
 
   return (
-    <UserProvider>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" options={{ title: 'Oops!' }} />
-        <Stack.Screen 
-          name="stock/[symbol]" 
-          options={{ 
-            headerShown: true,
-            headerBackTitleVisible: false,
-            presentation: 'card',
-          }} 
-        />
-      </Stack>
-      <StatusBar style="auto" />
-    </UserProvider>
+    <AuthProvider>
+      <UserProvider>
+        <AuthMiddleware>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="login" options={{ headerShown: false }} />
+            <Stack.Screen name="register" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" options={{ title: 'Oops!' }} />
+            <Stack.Screen 
+              name="stock/[symbol]" 
+              options={{ 
+                headerShown: true,
+                presentation: 'card',
+              }} 
+            />
+          </Stack>
+          <StatusBar style="auto" />
+        </AuthMiddleware>
+      </UserProvider>
+    </AuthProvider>
   );
 }
