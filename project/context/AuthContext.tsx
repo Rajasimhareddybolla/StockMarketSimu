@@ -50,7 +50,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     try {
-      // In a real app, this would be an API call to validate credentials
       const users = await AsyncStorage.getItem('users');
       const parsedUsers = users ? JSON.parse(users) : [];
       

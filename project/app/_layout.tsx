@@ -7,6 +7,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { UserProvider } from '@/context/UserContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { useAuth } from '@/context/AuthContext';
+import { ProfileProvider } from '../context/ProfileContext';
+import { ChatProvider } from '../context/ChatContext';
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -57,23 +59,27 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <UserProvider>
-        <AuthMiddleware>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="login" options={{ headerShown: false }} />
-            <Stack.Screen name="register" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" options={{ title: 'Oops!' }} />
-            <Stack.Screen 
-              name="stock/[symbol]" 
-              options={{ 
-                headerShown: true,
-                presentation: 'card',
-              }} 
-            />
-          </Stack>
-          <StatusBar style="auto" />
-        </AuthMiddleware>
+        <ProfileProvider>
+          <ChatProvider>
+            <AuthMiddleware>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" options={{ headerShown: false }} />
+                <Stack.Screen name="login" options={{ headerShown: false }} />
+                <Stack.Screen name="register" options={{ headerShown: false }} />
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="+not-found" options={{ title: 'Oops!' }} />
+                <Stack.Screen 
+                  name="stock/[symbol]" 
+                  options={{ 
+                    headerShown: true,
+                    presentation: 'card',
+                  }} 
+                />
+              </Stack>
+              <StatusBar style="auto" />
+            </AuthMiddleware>
+          </ChatProvider>
+        </ProfileProvider>
       </UserProvider>
     </AuthProvider>
   );
