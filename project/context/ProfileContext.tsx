@@ -28,7 +28,7 @@ const defaultProfile: UserProfile = {
   riskTolerance: 'medium',
   investmentHorizon: 'medium',
   interests: [],
-  portfolioValue: 0,
+  portfolioValue: 10000,
   marketingSector: '',
   businessType: '',
   preferredInvestments: '',
@@ -68,9 +68,13 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Update profile
   const updateProfile = async (newProfile: Partial<UserProfile>) => {
     try {
+      // Prevent portfolioValue from being changed
+      const { portfolioValue, ...restNewProfile } = newProfile;
+      
       const updatedProfile = {
         ...(profile || defaultProfile),
-        ...newProfile,
+        ...restNewProfile,
+        portfolioValue: profile?.portfolioValue || defaultProfile.portfolioValue, // Keep existing or default value
       };
       
       await AsyncStorage.setItem('userProfile', JSON.stringify(updatedProfile));

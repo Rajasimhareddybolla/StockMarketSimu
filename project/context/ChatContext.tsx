@@ -39,6 +39,8 @@ interface ChatContextType {
   sendUserMessage: (message: string) => Promise<void>;
   updateChatTitle: (chatId: string, title: string) => Promise<void>;
   deleteChat: (chatId: string) => Promise<void>;
+  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
+  loadChatSessions: () => Promise<void>;
 }
 
 const ChatContext = createContext<ChatContextType>({
@@ -54,6 +56,8 @@ const ChatContext = createContext<ChatContextType>({
   sendUserMessage: async () => {},
   updateChatTitle: async () => {},
   deleteChat: async () => {},
+  setMessages: () => {},
+  loadChatSessions: async () => {},
 });
 
 export const useChat = () => useContext(ChatContext);
@@ -344,6 +348,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sendUserMessage,
         updateChatTitle,
         deleteChat,
+        setMessages,
+        loadChatSessions,
       }}
     >
       {children}

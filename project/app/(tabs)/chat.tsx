@@ -2,11 +2,12 @@ import { View, StyleSheet, Text, TouchableOpacity, Alert } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '@react-navigation/native';
 import { Link, router, Stack } from 'expo-router';
-import { MessageSquarePlus, Settings, List } from 'lucide-react-native';
+import { MessageSquarePlus, Settings, List, Trash2, DollarSign } from 'lucide-react-native';
 import ChatList from '../../components/ChatList';
 import ChatInput from '../../components/ChatInput';
 import { useChat } from '../../context/ChatContext';
 import { useProfile } from '../../context/ProfileContext';
+import { clearChat } from '../../utils/geminiApi';
 
 export default function ChatScreen() {
   const theme = useTheme();
@@ -20,7 +21,9 @@ export default function ChatScreen() {
     sendUserMessage, 
     createNewChat,
     selectChat,
-    deleteChat
+    deleteChat,
+    setMessages,
+    loadChatSessions
   } = useChat();
   const { profile } = useProfile();
   const [showSidebar, setShowSidebar] = useState(false);
@@ -77,6 +80,34 @@ export default function ChatScreen() {
     );
   };
 
+  const handleClearChat = () => {
+    if (!currentChatId) return;
+    
+    Alert.alert(
+      'Clear Chat',
+      'Are you sure you want to clear this chat? This will remove all messages but keep the chat history.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        { 
+          text: 'Clear', 
+          onPress: async () => {
+            try {
+              await clearChat(currentChatId);
+              setMessages([]);
+              await loadChatSessions();
+            } catch (error) {
+              console.error('Error clearing chat:', error);
+              Alert.alert('Error', 'Failed to clear chat. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.dark ? '#121212' : '#f8f9fa' }]}>
       <Stack.Screen 
@@ -115,6 +146,20 @@ export default function ChatScreen() {
           ),
         }}
       />
+
+      {/* Balance Display */}
+      <View style={[
+        styles.balanceContainer,
+        { backgroundColor: theme.dark ? '#1a1a1a' : '#ffffff' }
+      ]}>
+        <DollarSign size={20} color={theme.dark ? '#4CAF50' : '#2E7D32'} />
+        <Text style={[
+          styles.balanceText,
+          { color: theme.dark ? '#4CAF50' : '#2E7D32' }
+        ]}>
+          Balance: ${profile?.portfolioValue?.toLocaleString() || '10,000'}
+        </Text>
+      </View>
 
       {/* Sidebar for chat history */}
       {showSidebar && (
@@ -196,6 +241,24 @@ export default function ChatScreen() {
           </View>
         ) : null}
 
+        <View style={styles.chatHeader}>
+          <TouchableOpacity
+            onPress={handleClearChat}
+            style={[
+              styles.clearButton,
+              { backgroundColor: theme.dark ? '#333' : '#f0f0f0' }
+            ]}
+          >
+            <Trash2 size={20} color={theme.dark ? '#ff6b6b' : '#d32f2f'} />
+            <Text style={[
+              styles.clearButtonText,
+              { color: theme.dark ? '#ff6b6b' : '#d32f2f' }
+            ]}>
+              Clear Chat
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         <ChatList messages={messages} isLoading={isLoading} />
         <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
       </View>
@@ -271,5 +334,35 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 14,
     textAlign: 'center',
+  },
+  balanceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  balanceText: {
+    marginLeft: 8,
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  chatHeader: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    padding: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  clearButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 8,
+  },
+  clearButtonText: {
+    marginLeft: 4,
+    fontSize: 14,
+    fontWeight: '500',
   },
 }); 

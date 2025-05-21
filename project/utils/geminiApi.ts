@@ -9,6 +9,12 @@ const initializeAI = (apiKey: string) => {
 // Improve the system prompt with more detailed investing guidance
 const SYSTEM_PROMPT = `You are an expert financial advisor specializing in stock market investments and marketing strategy.
 
+IMPORTANT: You must ALWAYS respond in exactly TWO lines:
+- First line: Direct answer to the user's question
+- Second line: Brief supporting point or additional context
+
+Keep responses extremely concise and focused. Never exceed two lines.
+
 EXPERTISE AREAS:
 1. Stock market analysis and investment recommendations
    - Technical and fundamental analysis
@@ -33,7 +39,7 @@ USER PROFILE PERSONALIZATION:
 - Consider the user's portfolio value when making specific recommendations
 - For marketing advice, focus on their business type and sector
 
-COMMUNICATION STYLE:zx
+COMMUNICATION STYLE:
 - Provide clear, actionable recommendations with reasoning
 - Use simple language while maintaining accuracy
 - Balance educational content with practical advice
@@ -117,6 +123,17 @@ export const setChatTitle = async (chatId: string, title: string) => {
   }
 };
 
+export const clearChat = async (chatId: string): Promise<boolean> => {
+  try {
+    await AsyncStorage.removeItem(`CHAT_${chatId}`);
+    await AsyncStorage.removeItem(`TITLE_${chatId}`);
+    return true;
+  } catch (error) {
+    console.error('Error clearing chat:', error);
+    return false;
+  }
+};
+
 // Update the sendMessage function to better include profile context
 export const sendMessage = async (
   apiKey: string,
@@ -125,18 +142,18 @@ export const sendMessage = async (
   userProfile?: any
 ): Promise<string> => {
   try {
-    // Initialize the API
     const genAI = initializeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
     
-    // Get the last user message which we want to respond to
     const lastUserMessage = messages[messages.length - 1];
     
-    // Build context with profile information if available
     let profileContext = '';
     if (userProfile) {
-      profileContext = `you are an aidvisor for ai stock market app your answer should be concise  and  accurate. you should always respond in the to user question and solve the problem. hear  is the user profile information: you should use this information to answer the user question.
-USER PROFILE INFORMATION:
+      profileContext = `IMPORTANT: Respond in EXACTLY TWO LINES.
+First line: Direct answer to the question
+Second line: Brief supporting point
+
+User profile information (use only if relevant to the question):
 Name: ${userProfile.name || 'Not specified'}
 Investment Goals: ${userProfile.investmentGoals || 'Not specified'}
 Risk Tolerance: ${userProfile.riskTolerance || 'Medium'} 
@@ -146,46 +163,31 @@ Preferred Investments: ${userProfile.preferredInvestments || 'Not specified'}
 Marketing Sector: ${userProfile.marketingSector || 'Not specified'}
 Business Type: ${userProfile.businessType || 'Not specified'}
 
-Please tailor your advice to this profile information.
-and always respond to the answer in very short and concise manner.  use the information when it required , dont use it when it is not required.
-hear you shoiuld act like a normal human being when general chat is required.
-and you should not use the information when it is not required.
-when it required you should use the information and when it is not required you should not use the information.
-always respond in 2 lines ,, 
-`;
+Remember: Keep it to exactly two lines, use profile info only if relevant.`;
     }
     
-    // Include context from previous messages if available
-    let conversationContext = '';
-    if (messages.length > 1) {
-      // Add a simplified context from previous messages
-      conversationContext = `PREVIOUS CONVERSATION:\n` + 
-        messages.slice(0, -1).map(msg => 
-          `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`
-        ).join('\n\n') + '\n\n';
-    }
-    
-    // Combine everything into the prompt
     const prompt = `${profileContext}
-${conversationContext}
 User: ${lastUserMessage.content}
 
-Please provide expert investment and/or marketing advice based on this question.`;
+Remember: Respond in exactly two lines. First line: direct answer. Second line: brief supporting point.`;
     
-    // Generate content
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: {
         temperature: 0.7,
-        maxOutputTokens: 1024,
+        maxOutputTokens: 150, // Reduced to encourage shorter responses
       },
       systemInstruction: SYSTEM_PROMPT,
     });
     
-    // Extract the response text
-    const responseText = result.response.text();
+    let responseText = result.response.text();
     
-    // Send via callback if provided
+    // Ensure response is exactly two lines
+    const lines = responseText.split('\n').filter(line => line.trim());
+    if (lines.length > 2) {
+      responseText = lines.slice(0, 2).join('\n');
+    }
+    
     if (onChunkReceived) {
       onChunkReceived(responseText);
     }
