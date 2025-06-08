@@ -6,9 +6,19 @@ import { useRouter } from 'expo-router';
 import { Star, Plus } from 'lucide-react-native';
 
 export default function WatchlistSection() {
-  const { watchlist, removeFromWatchlist, stocks } = useUser();
+  const userContext = useUser();
   const router = useRouter();
   const colorScheme = useColorScheme();
+  
+  // Safety check to ensure context is available
+  if (!userContext) {
+    console.warn('UserContext not available in WatchlistSection');
+    return null;
+  }
+  
+  const { watchlist, removeFromWatchlist, stocks } = userContext;
+  
+  console.log('WatchlistSection rendering with watchlist:', watchlist);
   
   // Get stock details for each watchlist item
   const watchlistStocks = watchlist.map(symbol => {
@@ -76,7 +86,12 @@ export default function WatchlistSection() {
                 
                 <TouchableOpacity
                   style={styles.removeButton}
-                  onPress={() => removeFromWatchlist(stock.symbol)}
+                  onPress={(e) => {
+                    e.stopPropagation(); // Prevent navigation when removing from watchlist
+                    console.log('WatchlistSection: Removing from watchlist:', stock.symbol);
+                    removeFromWatchlist(stock.symbol);
+                  }}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                   <Star size={18} color="#10B981" fill="#10B981" />
                 </TouchableOpacity>

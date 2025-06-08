@@ -36,9 +36,14 @@ export default function StockDetailScreen() {
   const handleWatchlistToggle = () => {
     if (!stock) return;
     
+    console.log('Watchlist toggle pressed for stock:', stock.symbol);
+    console.log('Current watchlist status:', isInWatchlist(stock.symbol));
+    
     if (isInWatchlist(stock.symbol)) {
+      console.log('Removing from watchlist...');
       removeFromWatchlist(stock.symbol);
     } else {
+      console.log('Adding to watchlist...');
       addToWatchlist(stock.symbol);
     }
   };

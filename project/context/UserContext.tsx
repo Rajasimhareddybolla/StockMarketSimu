@@ -252,17 +252,34 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   
   const addToWatchlist = (symbol: string) => {
+    console.log('Adding to watchlist:', symbol);
+    console.log('Current watchlist:', watchlist);
     if (!watchlist.includes(symbol)) {
-      setWatchlist(prev => [...prev, symbol]);
+      console.log('Symbol not in watchlist, adding...');
+      setWatchlist(prev => {
+        const newList = [...prev, symbol];
+        console.log('New watchlist:', newList);
+        return newList;
+      });
+    } else {
+      console.log('Symbol already in watchlist');
     }
   };
   
   const removeFromWatchlist = (symbol: string) => {
-    setWatchlist(prev => prev.filter(item => item !== symbol));
+    console.log('Removing from watchlist:', symbol);
+    console.log('Current watchlist:', watchlist);
+    setWatchlist(prev => {
+      const newList = prev.filter(item => item !== symbol);
+      console.log('New watchlist after removal:', newList);
+      return newList;
+    });
   };
   
   const isInWatchlist = (symbol: string) => {
-    return watchlist.includes(symbol);
+    const isIn = watchlist.includes(symbol);
+    console.log(`Checking if ${symbol} is in watchlist:`, isIn, 'Current list:', watchlist);
+    return isIn;
   };
   
   return (
