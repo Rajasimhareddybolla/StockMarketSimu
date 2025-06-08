@@ -39,42 +39,42 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" options={{ title: 'Oops!' }} />
-        <Stack.Screen 
-          name="stock/[symbol]" 
-          options={{ 
-            headerShown: true,
-            presentation: 'card',
-          }} 
-        />
-        <Stack.Screen 
-          name="profile" 
-          options={{ 
-            headerShown: true,
-            title: 'Profile',
-            presentation: 'card',
-          }} 
-        />
-        <Stack.Screen 
-          name="settings" 
-          options={{ 
-            headerShown: true,
-            title: 'Settings',
-            presentation: 'card',
-          }} 
-        />
-      </Stack>
+      <UserProvider>
+        <PortfolioProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" options={{ title: 'Oops!' }} />
+            <Stack.Screen 
+              name="stock/[symbol]" 
+              options={{ 
+                headerShown: true,
+                presentation: 'card',
+              }} 
+            />
+            <Stack.Screen 
+              name="profile" 
+              options={{ 
+                headerShown: true,
+                title: 'Profile',
+                presentation: 'card',
+              }} 
+            />
+            <Stack.Screen 
+              name="settings" 
+              options={{ 
+                headerShown: true,
+                title: 'Settings',
+                presentation: 'card',
+              }} 
+            />
+          </Stack>
 
-      <AuthGuard isLayoutReady={isLayoutMounted}>
-        <UserProvider>
-          <PortfolioProvider>
+          <AuthGuard isLayoutReady={isLayoutMounted}>
             <StatusBar style="auto" />
-          </PortfolioProvider>
-        </UserProvider>
-      </AuthGuard>
+          </AuthGuard>
+        </PortfolioProvider>
+      </UserProvider>
     </AuthProvider>
   );
 }
