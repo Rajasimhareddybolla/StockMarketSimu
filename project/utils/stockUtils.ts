@@ -97,7 +97,7 @@ export const generateChartData = (days: number = 30, basePrice: number = 100): C
 export const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'INR',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(value);

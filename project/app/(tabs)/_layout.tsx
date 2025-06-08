@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { ChartBar as BarChart2, Chrome as Home, ChartLine as LineChart, ChartPie as PieChart, Search, User, MessageCircle } from 'lucide-react-native';
+import { ChartBar as BarChart2, Chrome as Home, ChartLine as LineChart, ChartPie as PieChart, Search, User } from 'lucide-react-native';
 import { useColorScheme } from 'react-native';
 
 export default function TabLayout() {
@@ -55,14 +55,7 @@ export default function TabLayout() {
           headerTitle: 'My Portfolio',
         }}
       />
-      <Tabs.Screen
-        name="chat"
-        options={{
-          title: 'AI Chat',
-          tabBarIcon: ({ color, size }) => <MessageCircle size={size} color={color} />,
-          headerTitle: 'AI Assistant',
-        }}
-      />
+
       <Tabs.Screen
         name="history"
         options={{

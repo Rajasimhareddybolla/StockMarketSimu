@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, Stack } from 'expo-router';
 import { useColorScheme } from 'react-native';
@@ -39,6 +40,8 @@ export default function SettingsScreen() {
       riskTolerance: level,
     });
   };
+
+
 
   // Save all settings
   const saveSettings = async () => {
@@ -131,6 +134,8 @@ export default function SettingsScreen() {
             />
           </View>
         </View>
+
+
         
         <View style={[
           styles.section,
